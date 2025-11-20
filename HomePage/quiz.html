@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QuizSite</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* --- Quiz 固有スタイル（ダークテーマに合わせて調整） --- */
+    :root{
+      --bg:#0f1116;
+      --card:#15171d;
+      --accent:#3b82f6;
+      --muted:#9aa0af;
+      --glass:rgba(255,255,255,0.03);
+    }
+    *{box-sizing:border-box}
+    .wrap{width:100%;max-width:1000px;margin:36px auto;padding:16px}
+    header.inline-header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    header.inline-header h1{font-size:20px;margin:0;color:#fff}
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+      border-radius:12px;
+      padding:20px;
+      box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+      background-color:var(--card);
+      border: 1px solid rgba(255,255,255,0.02);
+    }
+
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:18px}
+    @media (max-width:880px){.grid{grid-template-columns:1fr} aside{order:-1}}
+
+    .question{font-size:18px;margin-bottom:14px;color:#fff}
+    .choices{display:grid;gap:10px}
+    button.choice{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005));
+      border:1px solid rgba(255,255,255,0.04);
+      padding:12px;border-radius:10px;text-align:left;cursor:pointer;color:#e8eefc;
+      transition: transform .15s, box-shadow .15s;
+      font-weight:600;
+    }
+    button.choice:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(59,130,246,0.12)}
+    button.choice:disabled{opacity:0.6;cursor:default;transform:none;box-shadow:none}
+
+    .meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;color:var(--muted);font-size:14px}
+    .progress{height:8px;background:rgba(255,255,255,0.03);border-radius:999px;overflow:hidden}
+    .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#7c3aed);width:0%}
+    aside{padding:16px}
+
+    .controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+    .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px;color:inherit;cursor:pointer}
+    .btn.primary{background:var(--accent);border:none;color:#022;font-weight:700;box-shadow:0 8px 16px rgba(6,182,212,0.08)}
+    .score{font-size:28px;font-weight:700;text-align:center;color:#fff}
+    footer.small{margin-top:12px;color:var(--muted);font-size:13px;text-align:center}
+    .small{font-size:13px;color:var(--muted)}
+
+    /* 正解／不正解の視覚補強 */
+    .choice.correct { box-shadow: 0 8px 20px rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.9); background: linear-gradient(180deg, rgba(34,197,94,0.06), rgba(34,197,94,0.02));}
+    .choice.wrong { box-shadow: 0 8px 20px rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.9); background: linear-gradient(180deg, rgba(239,68,68,0.03), rgba(239,68,68,0.01)); }
+
+    /* 終了画面のスタイル */
+    .result {
+      text-align:center;
+      padding:24px 12px;
+    }
+    .result .big { font-size:36px;font-weight:800;margin-bottom:6px;color:#fff}
+    .result .sub { color:var(--muted);margin-bottom:18px }
+  </style>
+</head>
+<body>
+  <!-- 共通ヘッダー -->
+  <header class="header">
+    <div class="logo">My Website</div>
+    <nav class="nav">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="quiz.html">Quiz</a></li>
+        <li><a href="gallery.html">Gallery</a></li>
+        <li><a href="profile.html">Profile</a></li>
+      </ul>
+    </nav>
+    <div class="hamburger"><span></span><span></span><span></span></div>
+  </header>
+
+  <div class="wrap">
+    <header class="inline-header">
+      <h1>Quiz</h1>
+      <div class="small">中学生範囲 — 楽しく復習しよう</div>
+    </header>
+
+    <div class="grid">
+      <main class="card" aria-live="polite">
+        <div class="meta">
+          <div id="qIndex">質問 1 / 5</div>
+          <div id="timer">残り: 00:30</div>
+        </div>
+
+        <div class="progress" aria-hidden><i id="progressBar"></i></div>
+
+        <section style="padding-top:14px">
+          <div id="question" class="question">読み込み中...</div>
+          <div id="choices" class="choices" role="list"></div>
+        </section>
+
+        <div class="controls">
+          <button id="prev" class="btn">戻る</button>
+          <button id="next" class="btn">次へ</button>
+          <button id="restart" class="btn">リスタート</button>
+        </div>
+      </main>
+
+      <aside class="card">
+        <div class="score" id="score">0</div>
+        <div class="small" style="text-align:center;margin-top:6px">現在のスコア</div>
+        <hr style="margin:16px 0;border:none;border-top:1px solid rgba(255,255,255,0.04)" />
+        <div class="small">高得点: <span id="best">0</span></div>
+        <div class="small" style="margin-top:10px">クイズ設定</div>
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+          <label class="small" style="display:flex;align-items:center;gap:8px">タイマー（秒）
+            <input id="timerInput" type="number" value="30" min="10" style="width:80px;margin-left:6px;padding:6px;border-radius:6px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:inherit">
+          </label>
+        </div>
+        <button id="startBtn" class="btn primary" style="width:100%;margin-top:12px">スタート</button>
+        <footer class="small">このサンプルは教育目的です。</footer>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    // --- 問題データ ---
+    const QUESTIONS = [
+      {q: '一次方程式 ax + b = 0 の解は？', choices:['x = -b/a','x = a/b','x = ab','x = a-b'], a:0},
+      {q: '光の三原色は？', choices:['赤・青・緑','赤・黄・青','黒・白・灰','赤・橙・紫'], a:0},
+      {q: '地球が太陽の周りを回る運動を何という？', choices:['自転','公転','反転','周回転'], a:1},
+      {q: '火山の噴火で出る溶けた岩石を何という？', choices:['マグマ','溶岩','砂岩','岩盤'], a:0},
+      {q: '日本の三権分立は行政・立法とあと1つは？', choices:['治安','司法','財務','統治'], a:1},
+      {q: '水は摂氏何度で沸騰する？', choices:['50℃','80℃','100℃','150℃'], a:2},
+      {q: '平安時代に書かれた日記文学は？', choices:['土佐日記','徒然草','平家物語','万葉集'], a:0},
+      {q: '植物が光を使ってデンプンを作る働きは？', choices:['光合成','蒸散','酸化','分解'], a:0},
+      {q: '直角は何度？', choices:['45°','60°','90°','180°'], a:2},
+      {q: '電流の単位は？', choices:['ボルト','アンペア','ワット','ジュール'], a:1}
+    ];
+
+    // --- 変数 ---
+    let index = 0;
+    let score = 0;
+    let timerSeconds = 30;
+    let timerId = null;
+    let timeLeft = 0;
+    let started = false;
+
+    // --- DOM ---
+    const qIndexEl = document.getElementById('qIndex');
+    const questionEl = document.getElementById('question');
+    const choicesEl = document.getElementById('choices');
+    const scoreEl = document.getElementById('score');
+    const bestEl = document.getElementById('best');
+    const progressEl = document.getElementById('progressBar');
+    const timerEl = document.getElementById('timer');
+
+    const prevBtn = document.getElementById('prev');
+    const nextBtn = document.getElementById('next');
+    const restartBtn = document.getElementById('restart');
+    const startBtn = document.getElementById('startBtn');
+    const timerInput = document.getElementById('timerInput');
+
+    // --- 初期化 ---
+    function init(){
+      loadBest();
+      bind();
+      renderQuestion();
+      // 初回タイマー表示
+      timerEl.textContent = `残り: 00:${String(timerSeconds).padStart(2,'0')}`;
+    }
+
+    function bind(){
+      prevBtn.addEventListener('click', ()=>{ if(index>0){ index--; renderQuestion(); } });
+      nextBtn.addEventListener('click', ()=>{ if(index<QUESTIONS.length-1){ index++; renderQuestion(); } else finishQuiz(); });
+      restartBtn.addEventListener('click', resetQuiz);
+      startBtn.addEventListener('click', startQuiz);
+      timerInput.addEventListener('change', ()=>{ timerSeconds = Math.max(10, parseInt(timerInput.value)||30); timerEl.textContent = `残り: 00:${String(timerSeconds).padStart(2,'0')}`; });
+    }
+
+    function renderQuestion(){
+      const q = QUESTIONS[index];
+      qIndexEl.textContent = `質問 ${index+1} / ${QUESTIONS.length}`;
+      questionEl.textContent = q.q;
+      choicesEl.innerHTML = '';
+      q.choices.forEach((c,i)=>{
+        const btn = document.createElement('button');
+        btn.className='choice';
+        btn.textContent = c;
+        btn.setAttribute('role','button');
+        btn.onclick = ()=>selectChoice(i, btn);
+        choicesEl.appendChild(btn);
+      });
+      updateProgress();
+    }
+
+    function selectChoice(choiceIndex, btnClicked){
+      if(!started) return; // スタートしてないと無効
+      const q = QUESTIONS[index];
+
+      // ボタン群を無効化して正解を強調
+      const buttons = choicesEl.querySelectorAll('button');
+      buttons.forEach((b, i)=>{
+        b.disabled = true;
+        if(i === q.a){
+          b.classList.add('correct');
+        }
+      });
+
+      // 選んだ答えが間違いなら視覚表示
+      if(choiceIndex !== q.a){
+        btnClicked.classList.add('wrong');
+      } else {
+        score += 10;
+        scoreEl.textContent = score;
+      }
+
+      // タイマー停止して短い遅延ののち遷移
+      clearInterval(timerId);
+      setTimeout(()=>{
+        if(index < QUESTIONS.length - 1){
+          index++;
+          renderQuestion();
+          startTimer();
+        } else {
+          finishQuiz();
+        }
+      }, 750);
+    }
+
+    function updateProgress(){
+      const pct = ((index) / (QUESTIONS.length)) * 100;
+      progressEl.style.width = pct + '%';
+    }
+
+    function startQuiz(){
+      if(started) return;
+      started = true;
+      score = 0;
+      index = 0;
+      scoreEl.textContent = score;
+      renderQuestion();
+      startTimer();
+    }
+
+    function startTimer(){
+      // タイマー初期化
+      timeLeft = timerSeconds;
+      timerEl.textContent = `残り: ${formatTime(timeLeft)}`;
+      clearInterval(timerId);
+      timerId = setInterval(()=>{
+        timeLeft--;
+        timerEl.textContent = `残り: ${formatTime(timeLeft)}`;
+        if(timeLeft <= 0){
+          clearInterval(timerId);
+          // タイムアップ：選択不可にして自動遷移（不正解扱い）
+          const buttons = choicesEl.querySelectorAll('button');
+          buttons.forEach((b,i)=>{
+            b.disabled = true;
+            // 正解を見せる
+            const q = QUESTIONS[index];
+            if(i === q.a) b.classList.add('correct');
+          });
+          setTimeout(()=>{
+            if(index < QUESTIONS.length - 1){
+              index++;
+              renderQuestion();
+              startTimer();
+            } else {
+              finishQuiz();
+            }
+          }, 700);
+        }
+      }, 1000);
+    }
+
+    function formatTime(sec){
+      const s = String(Math.max(0, sec)).padStart(2,'0');
+      return `00:${s}`;
+    }
+
+    function finishQuiz(){
+      started = false;
+      clearInterval(timerId);
+      updateBest();
+      // 結果表示
+      questionEl.textContent = '';
+      choicesEl.innerHTML = `
+        <div class="result">
+          <div class="big">${score} 点</div>
+          <div class="sub">お疲れさま！ リスタートで再挑戦できます。</div>
+          <div style="display:flex;gap:10px;justify-content:center">
+            <button id="ret" class="btn primary">もう一度挑戦</button>
+            <button id="toHome" class="btn">ホームへ戻る</button>
+          </div>
+        </div>
+      `;
+      progressEl.style.width = '100%';
+
+      // 結果ボタンのイベント
+      document.getElementById('ret').addEventListener('click', ()=>{ resetQuiz(); startQuiz(); });
+      document.getElementById('toHome').addEventListener('click', ()=>{ location.href = 'index.html'; });
+    }
+
+    function resetQuiz(){
+      started = false;
+      clearInterval(timerId);
+      score = 0;
+      index = 0;
+      scoreEl.textContent = score;
+      renderQuestion();
+      timerEl.textContent = `残り: 00:${String(timerSeconds).padStart(2,'0')}`;
+      progressEl.style.width = '0%';
+    }
+
+    // --- LocalStorage best score ---
+    function loadBest(){
+      const b = parseInt(localStorage.getItem('quiz_best')||'0');
+      bestEl.textContent = b;
+    }
+    function updateBest(){
+      const b = parseInt(localStorage.getItem('quiz_best')||'0');
+      if(score > b){
+        localStorage.setItem('quiz_best', String(score));
+        bestEl.textContent = score;
+      }
+    }
+
+    // ページロード
+    init();
+
+    // --- 補足: キーボード操作（オプション） ---
+    document.addEventListener('keydown', (e)=>{
+      if(!started) return;
+      if(e.key === 'ArrowRight'){ // 次
+        if(index < QUESTIONS.length - 1){ index++; renderQuestion(); startTimer(); }
+      } else if(e.key === 'ArrowLeft'){ // 前
+        if(index > 0){ index--; renderQuestion(); }
+      }
+    });
+  </script>
+
+  <!-- 共通スクリプト（ハンバーガー等） -->
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+/* ------------------------------
+   全体
+------------------------------ */
+body {
+  margin: 0;
+  font-family: "Inter", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  background: #ffffff;
+  color: #fff;
+}
+
+/* ------------------------------
+   Header（スマホ対応＆カッコよく）
+------------------------------ */
+.header {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  transition: 0.3s;
+}
+
+.header.small {
+  padding: 8px 20px;
+  backdrop-filter: blur(14px);
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  background: linear-gradient(90deg,#3b82f6,#7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* nav PC */
+.nav ul {
+  display: flex;
+  gap: 20px;
+  list-style: none;
+}
+
+.nav a {
+  color: #000000;
+  text-decoration: none;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.nav a:hover {
+  color: #3b82f6;
+}
+
+/* ハンバーガー */
+.hamburger {
+  width: 30px;
+  height: 22px;
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+}
+.hamburger span {
+  height: 3px;
+  background: #000000;
+  border-radius: 4px;
+}
+
+/* nav スマホ */
+@media(max-width:850px){
+  .hamburger { display:flex; }
+
+  .nav {
+    position: fixed;
+    top: 0; right: -240px;
+    width: 240px;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    padding-top: 80px;
+    transition: 0.3s;
+  }
+
+  .nav.active { right: 0; }
+
+  .nav ul {
+    flex-direction: column;
+    text-align: center;
+    gap: 25px;
+  }
+}
+
+/* ------------------------------
+   Home（ヒーロー + カード）
+------------------------------ */
+.hero {
+  padding: 140px 20px;
+  text-align: center;
+  background: linear-gradient(120deg,#3b82f6,#7c3aed);
+}
+.hero h1 {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+.hero p {
+  font-size: 18px;
+}
+.btn {
+  display: inline-block;
+  margin-top: 24px;
+  padding: 12px 25px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 700;
+  background:#000000;
+  color:#1b1b1b;
+}
+
+/* features */
+.features {
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: auto;
+}
+.feature-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit,minmax(260px,1fr));
+}
+.feature-card {
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.feature-card a {
+  color: #3b82f6; 
+}
+
+/* ------------------------------
+   Gallery
+------------------------------ */
+.gallery-grid {
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: auto;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit,minmax(260px,1fr));
+}
+.gallery-card {
+  background: #d6d6d6;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+.gallery-card img {
+  width: 100%;
+}
+.gallery-card h3 {
+  padding: 12px;
+  text-align: center;
+}
+
+/* ------------------------------
+   Profile
+------------------------------ */
+.profile {
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 20px;
+  line-height: 1.7;
+}
